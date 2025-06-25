@@ -6,3 +6,4 @@ cfn-lint
 checkov
 requests
 matplotlib
+helium

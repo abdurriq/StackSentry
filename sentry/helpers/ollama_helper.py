@@ -11,7 +11,7 @@ class OllamaHelper:
     def __init__(self, base_url: str = "http://localhost:11434"):
         self.base_url = base_url
         self.api_endpoint = f"{base_url}/api/generate"
-        self.model = "llama3:8b"  # Default model
+        self.model = "qwen2.5:0.5b"  # Default model
 
     def set_model(self, model: str) -> None:
         """Set the model to use."""

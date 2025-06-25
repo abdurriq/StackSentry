@@ -4,7 +4,18 @@ on:
     branches: [ main ]
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Run tests
+      run: |
+        chmod +x ./run_tests.sh
+        ./run_tests.sh
+
   deploy:
+    needs: test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -16,9 +27,11 @@ jobs:
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.SSH_KEY }}
         script: |
-          cd
-          git clone https://github.com/abdurriq/StackSentry || true
+          cd && git clone https://github.com/abdurriq/StackSentry || true
+
           cd StackSentry
           git pull origin main
           sudo .venv/bin/python3 manage.py collectstatic --noinput
+
+          ollama pull qwen2.5:0.5b
           sudo systemctl restart stacksentry
