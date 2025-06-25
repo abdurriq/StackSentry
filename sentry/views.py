@@ -94,6 +94,8 @@ class AnalysisListView(mixins.LoginRequiredMixin, ListView):
     context_object_name = 'analyses'
 
     def get_queryset(self):
+        if self.request.user.is_staff:
+            return Analysis.objects.all()
         return Analysis.objects.filter(template__user=self.request.user)
 
 
