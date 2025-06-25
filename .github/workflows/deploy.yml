@@ -20,5 +20,5 @@ jobs:
           git clone https://github.com/abdurriq/StackSentry || true
           cd StackSentry
           git pull origin main
-          sudo .venv/bin/python3 manage.py collectstatic
+          sudo .venv/bin/python3 manage.py collectstatic --noinput
           sudo systemctl restart stacksentry
