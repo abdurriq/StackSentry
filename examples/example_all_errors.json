@@ -1,0 +1,61 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Template with all types of errors",
+  "Resources": {
+    "MyBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": "my-public-bucket",
+        "InvalidProperty": true,
+        "Tags": [
+          { "Key": "Environment", "Value": "Production" }
+        ]
+      }
+    },
+    "MyInstance": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "InstanceType": "invalid.type",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "VolumeSize": "not a number",
+              "Encrypted": false
+            }
+          }
+        ],
+        "SecurityGroups": ["missing-quotes"]
+      }
+    },
+    "MySecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Allow all traffic",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "*",
+            "FromPort": -1,
+            "ToPort": 65536,
+            "CidrIp": "0.0.0.0/0"
+          }
+        ]
+      }
+    },
+    "MyDatabase": {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+        "DBInstanceClass": "invalid.class",
+        "AllocatedStorage": "string instead of number",
+        "MasterUsername": "admin",
+        "MasterUserPassword": "weak-password"
+      }
+    },
+    "MalformedResource": {
+      "Properties": {
+        "NoQuotes": true,
+        "InvalidRef": { "Ref": "NonExistentResource" }
+      }
+    }
+  }
+}

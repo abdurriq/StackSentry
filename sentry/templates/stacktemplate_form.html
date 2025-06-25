@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="upload-form">
+    <div class="section">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">
+                <i class="fas fa-cloud-upload-alt me-2"></i>
+                Upload CloudFormation Template
+            </h2>
+        </div>
+
+        <div class="alert alert-info mb-4">
+            <h5 class="alert-heading">
+                <i class="fas fa-info-circle me-2"></i>
+                Template Analysis
+            </h5>
+            <p>Upload your AWS CloudFormation template for comprehensive analysis. The template will be checked for:</p>
+            <ul class="mb-0">
+                <li><i class="fas fa-shield-alt me-2"></i>Security best practices and potential vulnerabilities</li>
+                <li><i class="fas fa-chart-line me-2"></i>Cost estimation for resources</li>
+                <li><i class="fas fa-check-circle me-2"></i>Template validation and syntax checking</li>
+            </ul>
+        </div>
+
+        <form method="post" id="templateForm" class="card">
+            {% csrf_token %}
+            <div class="card-body">
+                <div class="form-group mb-5">
+                    <label for="{{ form.name.id_for_label }}" class="form-label h5 mb-3">
+                        <i class="fas fa-tag me-2"></i>Template Name
+                    </label>
+                    {{ form.name }}
+                    <div class="form-text text-muted mt-2">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Give your template a descriptive name for easy reference
+                    </div>
+                </div>
+
+                <div class="form-group mb-5">
+                    <label for="{{ form.content.id_for_label }}" class="form-label h5 mb-3">
+                        <i class="fas fa-code me-2"></i>Template Content
+                    </label>
+                    {{ form.content }}
+                    <div class="form-text text-muted mt-2">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Paste your CloudFormation template here (YAML or JSON)
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary" onclick="formatCode()">
+                        <i class="fas fa-indent me-2"></i>Format Code
+                    </button>
+                    <button type="button" class="btn btn-outline-info" onclick="validateSyntax()">
+                        <i class="fas fa-check me-2"></i>Validate Syntax
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload me-2"></i>Upload & Analyze
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <div id="validationResult" class="mt-4" style="display: none;">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">
+                        <i class="fas fa-clipboard-check me-2"></i>
+                        Validation Result
+                    </h4>
+                    <div id="validationContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.section {
+    padding: 0 1rem;
+}
+
+.section > .d-flex,
+.section > .alert {
+    max-width: 1000px;
+    margin: 0 auto 1.5rem;
+}
+
+#templateForm {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+#validationResult {
+    max-width: 1400px;
+    margin: 1.5rem auto 0;
+}
+
+.form-group {
+    width: 100%;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: var(--dark-bg);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+/* Override Django form field styles */
+input[type="text"],
+textarea {
+    width: 100% !important;
+    max-width: none !important;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 0.75rem;
+    font-size: 1rem;
+}
+
+textarea {
+    font-family: 'Fira Code', monospace;
+    height: 700px;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 400px;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.card {
+    border: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+#validationResult pre {
+    margin: 0;
+    padding: 1rem;
+    background: var(--light-bg);
+    border-radius: 6px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.9rem;
+}
+
+#validationResult.success pre {
+    background-color: #ecfdf5;
+    border: 1px solid #059669;
+}
+
+#validationResult.error pre {
+    background-color: #fef2f2;
+    border: 1px solid #dc2626;
+}
+
+#validationResult.warning pre {
+    background-color: #fffbeb;
+    border: 1px solid #d97706;
+}
+</style>
+
+<script>
+async function formatCode() {
+    const textarea = document.querySelector('#{{ form.content.id_for_label }}');
+    const content = textarea.value;
+
+    if (!content.trim()) {
+        showValidation('error', 'Please enter template content');
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('content', content);
+
+        const response = await fetch('/format/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Formatting request failed');
+        }
+
+        textarea.value = data.content;
+        showValidation('success', 'Code formatted successfully');
+    } catch (e) {
+        showValidation('error', 'Error formatting code: ' + e.message);
+    }
+}
+
+async function validateSyntax() {
+    const content = document.querySelector('#{{ form.content.id_for_label }}').value;
+    if (!content.trim()) {
+        showValidation('error', 'Please enter template content');
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('content', content);
+
+        const response = await fetch('/validate/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Validation request failed');
+        }
+
+        const validation = data.validation;
+        if (validation.errors.length > 0) {
+            const errorMessages = validation.errors.map(error =>
+                `${error.code}: ${error.message}`
+            ).join('\n');
+            showValidation('error', 'Template Validation Errors:\n' + errorMessages);
+        } else if (validation.warnings.length > 0) {
+            const warningMessages = validation.warnings.map(warning =>
+                `${warning.code}: ${warning.message}`
+            ).join('\n');
+            showValidation('warning', 'Template Validation Warnings:\n' + warningMessages);
+        } else {
+            showValidation('success', 'Template validation passed successfully');
+        }
+    } catch (e) {
+        showValidation('error', 'Validation error: ' + e.message);
+    }
+}
+
+function showValidation(type, message) {
+    const result = document.getElementById('validationResult');
+    const content = document.getElementById('validationContent');
+    result.style.display = 'block';
+    result.className = type;
+
+    // Clear previous content
+    content.innerHTML = '';
+
+    if (type === 'success') {
+        // For success messages, just show the message
+        content.innerHTML = `<pre><code>${message}</code></pre>`;
+    } else {
+        // For errors and warnings, parse the message and make each one collapsible
+        const lines = message.split('\n');
+
+        if (lines.length <= 1) {
+            // If there's only one line, just show it
+            content.innerHTML = `<pre><code>${message}</code></pre>`;
+            return;
+        }
+
+        // Check if this is a list of errors/warnings with a header
+        const isErrorList = lines[0].includes('Template Validation Errors') ||
+                           lines[0].includes('Template Validation Warnings');
+
+        if (isErrorList) {
+            // Add the header
+            const header = document.createElement('div');
+            header.className = 'mb-3';
+            header.textContent = lines[0];
+            content.appendChild(header);
+
+            // Process each error/warning (skip the header)
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+
+                // Create collapsible card for each error
+                const errorId = `validation-item-${i}`;
+                const card = document.createElement('div');
+                card.className = 'card mb-2';
+                card.innerHTML = `
+                    <div class="card-header p-2 ${type === 'error' ? 'bg-danger' : 'bg-warning'} bg-opacity-10">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="text-${type === 'error' ? 'danger' : 'warning'} fw-bold">
+                                ${lines[i].length > 60 ? lines[i].substring(0, 60) + '...' : lines[i]}
+                            </div>
+                            <button class="btn btn-sm btn-outline-${type === 'error' ? 'danger' : 'warning'}"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#${errorId}"
+                                    aria-expanded="false">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="collapse" id="${errorId}">
+                        <div class="card-body">
+                            <pre><code>${lines[i]}</code></pre>
+                        </div>
+                    </div>
+                `;
+                content.appendChild(card);
+            }
+        } else {
+            // Just show the whole message if it doesn't follow the expected format
+            content.innerHTML = `<pre><code>${message}</code></pre>`;
+        }
+    }
+}
+
+// Add tab support in textarea
+document.querySelector('#{{ form.content.id_for_label }}').addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+        this.value = this.value.substring(0, start) + '  ' + this.value.substring(end);
+        this.selectionStart = this.selectionEnd = start + 2;
+    }
+});
+</script>
+{% endblock %}

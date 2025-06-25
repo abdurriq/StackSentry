@@ -1,0 +1,8 @@
+django
+django-widget-tweaks
+pip-tools
+WeasyPrint
+cfn-lint
+checkov
+requests
+matplotlib

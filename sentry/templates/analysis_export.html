@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Analysis Report - {{ template_info.name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1, h2, h3, h4 {
+            color: #2d3748;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+
+        h1 {
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+        }
+
+        .card {
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #fff;
+        }
+
+        .high-severity {
+            border-left: 4px solid #e53e3e;
+        }
+
+        .medium-severity {
+            border-left: 4px solid #dd6b20;
+        }
+
+        .low-severity {
+            border-left: 4px solid #3182ce;
+        }
+
+        .text-danger {
+            color: #e53e3e;
+        }
+
+        .text-warning {
+            color: #dd6b20;
+        }
+
+        .text-info {
+            color: #3182ce;
+        }
+
+        .alert {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .alert-info {
+            background-color: #ebf8ff;
+            border: 1px solid #bee3f8;
+        }
+
+        pre {
+            background-color: #f7fafc;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 0.9em;
+            border: 1px solid #e2e8f0;
+            white-space: pre-wrap;
+        }
+
+        .code-context {
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .line-numbers {
+            font-family: monospace;
+            counter-reset: line;
+        }
+
+        .line-number {
+            display: inline-block;
+            width: 3em;
+            color: #718096;
+            text-align: right;
+            margin-right: 1em;
+            padding-right: 0.5em;
+            border-right: 1px solid #cbd5e0;
+        }
+
+        .error-line {
+            background-color: #fed7d7;
+            display: inline-block;
+            width: calc(100% - 4.5em);
+            padding: 0 0.25em;
+            border-radius: 2px;
+        }
+
+        .warning-line {
+            background-color: #feebc8;
+            display: inline-block;
+            width: calc(100% - 4.5em);
+            padding: 0 0.25em;
+            border-radius: 2px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #e2e8f0;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f7fafc;
+        }
+
+        .cost-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .cost-box {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px;
+            background-color: #f7fafc;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .metadata {
+            margin-bottom: 20px;
+            color: #718096;
+        }
+
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 0.8em;
+            color: #718096;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 20px;
+        }
+
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+    </style>
+</head>
+<body>
+    <h1>Analysis Report: {{ template_info.name }}</h1>
+
+    <!-- Template Information -->
+    <div class="section">
+        <div class="metadata">
+            <div>Uploaded: {{ template_info.uploaded_at|date:"F j, Y, P" }}</div>
+            <div>Analysed: {{ template_info.analysed_at|date:"F j, Y, P" }}</div>
+        </div>
+    </div>
+
+    <!-- Security Issues -->
+    <div class="section">
+        <h2>Security Analysis</h2>
+
+        {% if security_issues.high %}
+        <div class="severity-group">
+            <h3 class="text-danger">High Severity Issues ({{ security_issues.high|length }})</h3>
+            {% for issue in security_issues.high %}
+            <div class="card high-severity">
+                <h4 class="text-danger">{{ issue.title }}</h4>
+                <p>{{ issue.description }}</p>
+                {% if issue.source %}
+                <p><small><strong>Source:</strong> {{ issue.source }}</small></p>
+                {% endif %}
+                {% if issue.recommendation %}
+                <div class="alert alert-info">
+                    <strong>Recommendation:</strong> {{ issue.recommendation }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if security_issues.medium %}
+        <div class="severity-group">
+            <h3 class="text-warning">Medium Severity Issues ({{ security_issues.medium|length }})</h3>
+            {% for issue in security_issues.medium %}
+            <div class="card medium-severity">
+                <h4 class="text-warning">{{ issue.title }}</h4>
+                <p>{{ issue.description }}</p>
+                {% if issue.source %}
+                <p><small><strong>Source:</strong> {{ issue.source }}</small></p>
+                {% endif %}
+                {% if issue.recommendation %}
+                <div class="alert alert-info">
+                    <strong>Recommendation:</strong> {{ issue.recommendation }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if security_issues.low %}
+        <div class="severity-group">
+            <h3 class="text-info">Low Severity Issues ({{ security_issues.low|length }})</h3>
+            {% for issue in security_issues.low %}
+            <div class="card low-severity">
+                <h4 class="text-info">{{ issue.title }}</h4>
+                <p>{{ issue.description }}</p>
+                {% if issue.source %}
+                <p><small><strong>Source:</strong> {{ issue.source }}</small></p>
+                {% endif %}
+                {% if issue.recommendation %}
+                <div class="alert alert-info">
+                    <strong>Recommendation:</strong> {{ issue.recommendation }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if not security_issues.high and not security_issues.medium and not security_issues.low %}
+        <div class="card">
+            <p>No security issues were found in this template.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Cost Analysis -->
+    <div class="section">
+        <h2>Cost Analysis</h2>
+
+        <!-- Current Costs -->
+        <h3>Current Cost Estimates</h3>
+        <div class="cost-grid">
+            <div class="cost-box">
+                <div>Hourly</div>
+                <div><strong>${{ cost_estimate.current.hourly_total|floatformat:3 }}</strong></div>
+            </div>
+            <div class="cost-box">
+                <div>Daily</div>
+                <div><strong>${{ cost_estimate.current.daily_total|floatformat:2 }}</strong></div>
+            </div>
+            <div class="cost-box">
+                <div>Weekly</div>
+                <div><strong>${{ cost_estimate.current.weekly_total|floatformat:2 }}</strong></div>
+            </div>
+            <div class="cost-box">
+                <div>Monthly</div>
+                <div><strong>${{ cost_estimate.current.monthly_total|floatformat:2 }}</strong></div>
+            </div>
+            <div class="cost-box">
+                <div>Yearly</div>
+                <div><strong>${{ cost_estimate.current.yearly_total|floatformat:2 }}</strong></div>
+            </div>
+        </div>
+
+        <!-- Cost Projection Chart -->
+        <h3>12-Month Cost Projection</h3>
+        <div class="chart-container">
+            <img src="data:image/png;base64,{{ chart_image }}" alt="Cost Projection Chart" style="width: 100%; max-width: 800px;">
+        </div>
+
+        <!-- Service Breakdown -->
+        <h3>Cost by Service (Monthly)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Service</th>
+                    <th style="text-align: right;">Estimated Cost</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for service, costs in cost_estimate.current.by_service.items %}
+                <tr>
+                    <td>{{ service }}</td>
+                    <td style="text-align: right;">${{ costs.monthly|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Validation Results -->
+    <div class="section">
+        <h2>Template Validation</h2>
+
+        <!-- Raw CFN-Lint Output for Debugging -->
+        <div class="card">
+            <h3>Raw CFN-Lint Output (Debug)</h3>
+            <pre>{{ validation_raw_output|default:"No raw output available" }}</pre>
+        </div>
+
+        {% if validation_errors %}
+        <div class="errors">
+            <h3 class="text-danger">Errors ({{ validation_errors|length }})</h3>
+            {% for error in validation_errors %}
+            <div class="card high-severity">
+                <h4>{{ error.code }}</h4>
+                <p>{{ error.message }}</p>
+                {% if error.source %}
+                <p><small><strong>Source:</strong> {{ error.source }}</small></p>
+                {% endif %}
+                {% if error.location %}
+                <p>
+                    <small>Line: {{ error.location.line }}, Column: {{ error.location.column }}</small>
+                </p>
+                {% if error.context_lines %}
+                <div class="code-context">
+                    <pre class="line-numbers">{% for line in error.context_lines %}<span class="line-number">{{ line.number }}</span>{% if line.is_error_line %}<span class="error-line">{{ line.content }}</span>{% else %}{{ line.content }}{% endif %}
+{% endfor %}</pre>
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if validation_warnings %}
+        <div class="warnings">
+            <h3 class="text-warning">Warnings ({{ validation_warnings|length }})</h3>
+            {% for warning in validation_warnings %}
+            <div class="card medium-severity">
+                <h4>{{ warning.code }}</h4>
+                <p>{{ warning.message }}</p>
+                {% if warning.source %}
+                <p><small><strong>Source:</strong> {{ warning.source }}</small></p>
+                {% endif %}
+                {% if warning.location %}
+                <p>
+                    <small>Line: {{ warning.location.line }}, Column: {{ warning.location.column }}</small>
+                </p>
+                {% if warning.context_lines %}
+                <div class="code-context">
+                    <pre class="line-numbers">{% for line in warning.context_lines %}<span class="line-number">{{ line.number }}</span>{% if line.is_error_line %}<span class="warning-line">{{ line.content }}</span>{% else %}{{ line.content }}{% endif %}
+{% endfor %}</pre>
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if not validation_errors and not validation_warnings %}
+        <div class="card">
+            <p>No validation issues were found in this template.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Template Content -->
+    <div class="section">
+        <h2>Template Content</h2>
+        <pre>{{ template_info.content }}</pre>
+    </div>
+
+    <div class="footer">
+        <p>Generated by StackSentry on {{ template_info.analysed_at|date:"F j, Y, P" }}</p>
+    </div>
+</body>
+</html>

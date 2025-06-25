@@ -1,0 +1,13 @@
+[Unit]
+Description=StackSentry
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/StackSentry
+ExecStart=/bin/bash ./run_server.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

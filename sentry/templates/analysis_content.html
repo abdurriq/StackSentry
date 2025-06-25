@@ -1,0 +1,923 @@
+<!-- Template Information -->
+<form id="csrf-form">
+    {% csrf_token %}
+</form>
+<div class="section template-info">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">{{ template_info.name }}</h2>
+        <div class="metadata text-muted">
+            <div><i class="fas fa-upload me-2"></i>Uploaded: {{ template_info.uploaded_at|date:"F j, Y, P" }}</div>
+            <div><i class="fas fa-clock me-2"></i>Analysed: {{ template_info.analysed_at|date:"F j, Y, P" }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Template Content -->
+<div class="section template-content">
+    <h3><i class="fas fa-code me-2"></i>Template Content</h3>
+    <pre><code class="language-yaml">{{ template_info.content }}</code></pre>
+</div>
+
+<!-- Security Issues -->
+<div class="section security-issues">
+    <h3><i class="fas fa-shield-alt me-2"></i>Security Analysis</h3>
+
+    {% if security_issues.high %}
+    <div class="severity-group">
+        <h4 class="text-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            High Severity Issues ({{ security_issues.high|length }})
+        </h4>
+        {% for issue in security_issues.high %}
+        <div class="card issue high-severity">
+            <div class="card-body">
+                <h5 class="card-title text-danger">{{ issue.title }}</h5>
+                <p class="card-text">{{ issue.description }}</p>
+                {% if issue.source %}
+                <div class="badge bg-secondary mb-2">Source: {{ issue.source }}</div>
+                {% endif %}
+                {% if issue.recommendation %}
+                <div class="alert alert-info">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Recommendation:</strong> {{ issue.recommendation }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if security_issues.medium %}
+    <div class="severity-group">
+        <h4 class="text-warning">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            Medium Severity Issues ({{ security_issues.medium|length }})
+        </h4>
+        {% for issue in security_issues.medium %}
+        <div class="card issue">
+            <div class="card-body">
+                <h5 class="card-title text-warning">{{ issue.title }}</h5>
+                <p class="card-text">{{ issue.description }}</p>
+                {% if issue.source %}
+                <div class="badge bg-secondary mb-2">Source: {{ issue.source }}</div>
+                {% endif %}
+                {% if issue.recommendation %}
+                <div class="alert alert-info">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Recommendation:</strong> {{ issue.recommendation }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if security_issues.low %}
+    <div class="severity-group">
+        <h4 class="text-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Low Severity Issues ({{ security_issues.low|length }})
+        </h4>
+        {% for issue in security_issues.low %}
+        <div class="card issue">
+            <div class="card-body">
+                <h5 class="card-title text-info">{{ issue.title }}</h5>
+                <p class="card-text">{{ issue.description }}</p>
+                {% if issue.source %}
+                <div class="badge bg-secondary mb-2">Source: {{ issue.source }}</div>
+                {% endif %}
+                {% if issue.recommendation %}
+                <div class="alert alert-info">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Recommendation:</strong> {{ issue.recommendation }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Validation Results -->
+<div class="section validation-results">
+    <h3><i class="fas fa-check-circle me-2"></i>Template Validation</h3>
+
+    {% if validation_errors %}
+    <div class="errors mb-4">
+        <h4 class="text-danger">
+            <i class="fas fa-times-circle me-2"></i>
+            Errors ({{ validation_errors|length }})
+        </h4>
+        {% for error in validation_errors %}
+        <div class="card mb-3 border-danger">
+            <div class="card-header bg-danger bg-opacity-10 p-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-danger me-2">{{ error.code }}</span>
+                        <span class="text-danger fw-bold">{{ error.message|truncatechars:60 }}</span>
+                        {% if error.location %}
+                        <small class="text-muted ms-2">
+                            <i class="fas fa-map-marker-alt me-1"></i>
+                            Line: {{ error.location.line }}, Column: {{ error.location.column }}
+                        </small>
+                        {% endif %}
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#error-{{ forloop.counter }}" aria-expanded="false">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="collapse" id="error-{{ forloop.counter }}">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="text-danger">{{ error.message }}</span>
+                    </div>
+                    {% if error.source %}
+                    <div class="badge bg-secondary mb-2">Source: {{ error.source }}</div>
+                    {% endif %}
+                    {% if error.location %}
+                    <div class="d-flex align-items-center mb-3">
+                        <small class="text-muted">
+                            <i class="fas fa-map-marker-alt me-1"></i>
+                            Line: {{ error.location.line }}, Column: {{ error.location.column }}
+                        </small>
+                        <a href="#" class="jump-to-line" onclick="scrollToLine({{ error.location.line }}, '{{ error.message|escapejs }}'); return false;">
+                            <i class="fas fa-arrow-right me-1"></i>Jump to line
+                        </a>
+                    </div>
+
+                    {% if error.context_lines %}
+                    <div class="code-context">
+                        <pre class="line-numbers">{% for line in error.context_lines %}<div class="code-line {% if line.is_error_line %}error-line{% endif %}"><span class="line-number">{{ line.number }}</span>{{ line.content }}</div>{% endfor %}</pre>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if validation_warnings %}
+    <div class="warnings">
+        <h4 class="text-warning">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            Warnings ({{ validation_warnings|length }})
+        </h4>
+        {% for warning in validation_warnings %}
+        <div class="card mb-3 border-warning">
+            <div class="card-header bg-warning bg-opacity-10 p-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-warning text-dark me-2">{{ warning.code }}</span>
+                        <span class="fw-bold">{{ warning.message|truncatechars:60 }}</span>
+                    </div>
+                    <button class="btn btn-sm btn-outline-warning" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#warning-{{ forloop.counter }}" aria-expanded="false">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="collapse" id="warning-{{ forloop.counter }}">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <span>{{ warning.message }}</span>
+                    </div>
+                    {% if warning.source %}
+                    <div class="badge bg-secondary mb-2">Source: {{ warning.source }}</div>
+                    {% endif %}
+                    {% if warning.location %}
+                    <div class="d-flex align-items-center mb-3">
+                        <small class="text-muted">
+                            <i class="fas fa-map-marker-alt me-1"></i>
+                            Line: {{ warning.location.line }}, Column: {{ warning.location.column }}
+                        </small>
+                        <a href="#" class="jump-to-line" onclick="scrollToLine({{ warning.location.line }}, '{{ warning.message|escapejs }}'); return false;">
+                            <i class="fas fa-arrow-right me-1"></i>Jump to line
+                        </a>
+                    </div>
+
+                    {% if warning.context_lines %}
+                    <div class="code-context">
+                        <pre class="line-numbers">{% for line in warning.context_lines %}<div class="code-line {% if line.is_error_line %}warning-line{% endif %}"><span class="line-number">{{ line.number }}</span>{{ line.content }}</div>{% endfor %}</pre>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Cost Analysis -->
+<div class="section cost-analysis">
+    <h3><i class="fas fa-chart-line me-2"></i>Cost Analysis</h3>
+
+    <!-- Current Costs -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4 class="card-title mb-4">Current Cost Estimates</h4>
+            <div class="row g-4">
+                <div class="col-md">
+                    <div class="p-3 bg-light rounded">
+                        <div class="text-muted mb-1">Hourly</div>
+                        <div class="h4 mb-0">${{ cost_estimate.current.hourly_total|floatformat:3 }}</div>
+                    </div>
+                </div>
+                <div class="col-md">
+                    <div class="p-3 bg-light rounded">
+                        <div class="text-muted mb-1">Daily</div>
+                        <div class="h4 mb-0">${{ cost_estimate.current.daily_total|floatformat:2 }}</div>
+                    </div>
+                </div>
+                <div class="col-md">
+                    <div class="p-3 bg-light rounded">
+                        <div class="text-muted mb-1">Weekly</div>
+                        <div class="h4 mb-0">${{ cost_estimate.current.weekly_total|floatformat:2 }}</div>
+                    </div>
+                </div>
+                <div class="col-md">
+                    <div class="p-3 bg-light rounded">
+                        <div class="text-muted mb-1">Monthly</div>
+                        <div class="h4 mb-0">${{ cost_estimate.current.monthly_total|floatformat:2 }}</div>
+                    </div>
+                </div>
+                <div class="col-md">
+                    <div class="p-3 bg-light rounded">
+                        <div class="text-muted mb-1">Yearly</div>
+                        <div class="h4 mb-0">${{ cost_estimate.current.yearly_total|floatformat:2 }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Breakdown -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4 class="card-title mb-4">Cost by Service</h4>
+            <div class="btn-group mb-4" role="group">
+                <button class="btn btn-outline-primary active" data-period="hourly">Hourly</button>
+                <button class="btn btn-outline-primary" data-period="daily">Daily</button>
+                <button class="btn btn-outline-primary" data-period="weekly">Weekly</button>
+                <button class="btn btn-outline-primary" data-period="monthly">Monthly</button>
+                <button class="btn btn-outline-primary" data-period="yearly">Yearly</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table" id="costTable">
+                    <thead>
+                        <tr>
+                            <th>Service</th>
+                            <th class="text-end">Estimated Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for service, costs in cost_estimate.current.by_service.items %}
+                        <tr>
+                            <td>
+                                <i class="fas fa-cloud me-2"></i>{{ service }}
+                            </td>
+                            <td class="text-end cost-value"
+                                data-hourly="{{ costs.hourly|floatformat:3 }}"
+                                data-daily="{{ costs.daily|floatformat:2 }}"
+                                data-weekly="{{ costs.weekly|floatformat:2 }}"
+                                data-monthly="{{ costs.monthly|floatformat:2 }}"
+                                data-yearly="{{ costs.yearly|floatformat:2 }}">
+                                ${{ costs.hourly|floatformat:3 }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cost Projection -->
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title mb-4">12-Month Cost Projection</h4>
+            <canvas id="costProjectionChart" height="300"></canvas>
+        </div>
+    </div>
+</div>
+
+
+<!-- Ollama AI Analysis -->
+<div class="section ollama-analysis">
+    <h3><i class="fas fa-robot me-2"></i>Ollama AI Analysis</h3>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="card-title mb-0">Local AI-Powered Insights</h4>
+                <div class="d-flex align-items-center">
+                    <span id="ollama-status" class="badge bg-secondary me-2">Not Connected</span>
+                </div>
+            </div>
+
+            <p class="text-muted">
+                Get AI-powered analysis of your template using your local Ollama instance.
+                Make sure Ollama is running on this device (default: http://localhost:11434).
+            </p>
+
+            <!-- Hidden form for Ollama connection -->
+            <form id="ollama-connect-form" method="GET" action="/api/ollama/models/" style="display:none;">
+                {% csrf_token %}
+            </form>
+
+            <div class="d-flex gap-2 mb-4">
+                <button id="check-ollama-btn" class="btn btn-primary" type="button">
+                    <i class="fas fa-plug me-2"></i>Connect to Ollama
+                </button>
+                <button id="analyze-security-btn" class="btn btn-outline-danger" disabled>
+                    <i class="fas fa-shield-alt me-2"></i>Analyze Security
+                </button>
+                <button id="suggest-fixes-btn" class="btn btn-outline-warning" disabled>
+                    <i class="fas fa-wrench me-2"></i>Suggest Fixes
+                </button>
+                <button id="optimize-cost-btn" class="btn btn-outline-success" disabled>
+                    <i class="fas fa-piggy-bank me-2"></i>Optimize Cost
+                </button>
+            </div>
+
+            <div id="ollama-result" class="ai-output p-3 bg-light rounded" style="display: none;">
+                <div class="d-flex justify-content-between mb-2">
+                    <h5 id="ollama-result-title">Analysis Result</h5>
+                    <button id="ollama-result-close" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div id="ollama-result-content" class="ai-content">
+                    <!-- AI output will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block analysis_styles %}
+<style>
+.severity-group {
+    margin-bottom: 2rem;
+}
+
+.issue {
+    margin-bottom: 1rem;
+}
+
+.high-severity {
+    border-left: 4px solid var(--danger-color);
+}
+
+.cost-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.btn-group .btn.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.table th {
+    background-color: var(--light-bg);
+}
+
+.ai-output {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: #f8fafc;
+}
+
+.ai-content {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+#ollama-result-content {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+/* Code context styles */
+.code-context {
+    margin: 10px 0;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.code-context pre {
+    margin: 0;
+    padding: 0;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    overflow-x: auto;
+}
+
+.line-numbers {
+    counter-reset: line;
+    padding: 0.5rem 0;
+}
+
+.line-number {
+    display: inline-block;
+    width: 3em;
+    color: #718096;
+    text-align: right;
+    margin-right: 1em;
+    padding-right: 0.5em;
+    border-right: 1px solid #cbd5e0;
+    user-select: none;
+}
+
+.code-line {
+    display: block;
+    padding: 0 0.5rem;
+}
+
+.error-line {
+    background-color: rgba(252, 165, 165, 0.3);
+    display: block;
+    width: 100%;
+}
+
+.warning-line {
+    background-color: rgba(254, 215, 170, 0.3);
+    display: block;
+    width: 100%;
+}
+
+.code-line:hover {
+    background-color: rgba(203, 213, 225, 0.2);
+}
+
+.jump-to-line {
+    cursor: pointer;
+    color: var(--primary-color);
+    text-decoration: underline;
+    margin-left: 0.5rem;
+}
+
+/* Line numbering and highlighting styles */
+.line-numbered-content {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    counter-reset: line;
+    line-height: 1.5;
+}
+
+.line-numbered-content .code-line {
+    display: flex;
+    white-space: pre;
+}
+
+.line-numbered-content .line-number {
+    display: inline-block;
+    width: 3em;
+    color: #718096;
+    text-align: right;
+    margin-right: 1em;
+    padding-right: 0.5em;
+    border-right: 1px solid #cbd5e0;
+    user-select: none;
+}
+
+.line-numbered-content .line-content {
+    flex: 1;
+}
+
+.highlighted-line {
+    background-color: rgba(255, 255, 0, 0.5) !important;
+    animation: highlight-pulse 2s 1;
+}
+
+@keyframes highlight-pulse {
+    0% { background-color: rgba(255, 255, 0, 0.8); }
+    100% { background-color: rgba(255, 255, 0, 0.5); }
+}
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- Include Chart.js library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+<script>
+// First, let's modify the template content to include line numbers when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const templateSection = document.querySelector('.template-content');
+    if (!templateSection) return;
+
+    const codeElement = templateSection.querySelector('pre code');
+    if (!codeElement) return;
+
+    // Get the content and split into lines
+    const content = codeElement.textContent;
+    const lines = content.split('\n');
+
+    // Create a new element with line numbers
+    const numberedContent = document.createElement('div');
+    numberedContent.className = 'line-numbered-content';
+
+    // Add each line with a line number
+    lines.forEach((line, index) => {
+        const lineNumber = index + 1;
+        const lineElement = document.createElement('div');
+        lineElement.className = 'code-line';
+        lineElement.dataset.lineNumber = lineNumber;
+
+        const lineNumberSpan = document.createElement('span');
+        lineNumberSpan.className = 'line-number';
+        lineNumberSpan.textContent = lineNumber;
+
+        const lineContentSpan = document.createElement('span');
+        lineContentSpan.className = 'line-content';
+        lineContentSpan.textContent = line;
+
+        lineElement.appendChild(lineNumberSpan);
+        lineElement.appendChild(lineContentSpan);
+        numberedContent.appendChild(lineElement);
+    });
+
+    // Replace the code element with our numbered content
+    const preElement = codeElement.parentElement;
+    preElement.innerHTML = '';
+    preElement.appendChild(numberedContent);
+});
+
+// Function to scroll to a specific line in the template content
+function scrollToLine(lineNumber, errorText) {
+    // First, make sure we're looking at the template content section
+    const templateSection = document.querySelector('.template-content');
+    if (!templateSection) return;
+
+    // Scroll to the template content section first
+    templateSection.scrollIntoView({ behavior: 'smooth' });
+
+    // Get the content container
+    const contentContainer = templateSection.querySelector('.line-numbered-content');
+    if (!contentContainer) return;
+
+    // Get the pre element
+    const preElement = templateSection.querySelector('pre');
+    if (!preElement) return;
+
+    // Try to find the line by line number first
+    let lineElement = templateSection.querySelector(`.code-line[data-line-number="${lineNumber}"]`);
+
+    // If we have error text, try to find a better match
+    if (errorText && typeof errorText === 'string') {
+        // Extract the key part of the error message
+        let searchText = errorText;
+
+        // Look for common patterns in error messages
+        const propertyMatch = errorText.match(/'([^']+)' was unexpected/);
+        if (propertyMatch && propertyMatch[1]) {
+            searchText = propertyMatch[1];
+        }
+
+        // Search for the text in all lines
+        const allLines = contentContainer.querySelectorAll('.code-line');
+        for (const line of allLines) {
+            const content = line.textContent || '';
+            if (content.includes(searchText)) {
+                lineElement = line;
+                console.log(`Found better match for "${searchText}" on line ${line.dataset.lineNumber}`);
+                break;
+            }
+        }
+    }
+
+    if (!lineElement) {
+        console.error(`Line ${lineNumber} not found`);
+        return;
+    }
+
+    // Scroll to the line with a small delay to ensure the section is in view
+    setTimeout(() => {
+        // Calculate position to scroll to
+        const lineTop = lineElement.offsetTop;
+        const preHeight = preElement.clientHeight;
+
+        // Scroll the line into view, positioning it 1/4 of the way down from the top
+        preElement.scrollTop = Math.max(0, lineTop - preHeight / 4);
+
+        // Highlight the line
+        lineElement.classList.add('highlighted-line');
+
+        // Remove the highlight after a delay
+        setTimeout(() => {
+            lineElement.classList.remove('highlighted-line');
+        }, 2000);
+    }, 300);
+}
+
+document.querySelectorAll('.btn-group .btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        // Update active button
+        document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Update costs
+        const period = btn.dataset.period;
+        document.querySelectorAll('.cost-value').forEach(cell => {
+            cell.textContent = '$' + cell.dataset[period];
+        });
+    });
+});
+
+// Initialize cost projection chart
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('costProjectionChart').getContext('2d');
+    const projectionData = {{ cost_estimate.projection|safe }};
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: projectionData.map(d => `Month ${d.month}`),
+            datasets: Object.keys(projectionData[0].by_service).map(service => ({
+                label: service,
+                data: projectionData.map(d => d.by_service[service]),
+                borderColor: getRandomColor(),
+                fill: false,
+                tension: 0.1
+            }))
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Monthly Cost Projection by Service'
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: $${context.parsed.y.toFixed(2)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Cost ($)'
+                    }
+                }
+            }
+        }
+    });
+});
+
+function getRandomColor() {
+    const colors = [
+        '#2563eb', '#dc2626', '#059669', '#d97706',
+        '#7c3aed', '#db2777', '#2dd4bf', '#84cc16',
+        '#4f46e5', '#ea580c', '#0891b2', '#4338ca'
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+}
+
+// Ollama integration
+document.addEventListener('DOMContentLoaded', function() {
+    // Global variables
+    let currentModel = 'llama3:8b';
+    const analysisId = {{ analysis.id }};
+    const checkOllamaBtn = document.getElementById('check-ollama-btn');
+    const analyzeSecurityBtn = document.getElementById('analyze-security-btn');
+    const suggestFixesBtn = document.getElementById('suggest-fixes-btn');
+    const optimizeCostBtn = document.getElementById('optimize-cost-btn');
+    const ollamaResult = document.getElementById('ollama-result');
+    const ollamaResultTitle = document.getElementById('ollama-result-title');
+    const ollamaResultContent = document.getElementById('ollama-result-content');
+    const ollamaResultClose = document.getElementById('ollama-result-close');
+    const ollamaStatus = document.getElementById('ollama-status');
+    const csrfToken = document.querySelector('#csrf-form [name=csrfmiddlewaretoken]')?.value;
+
+    // Connect to Ollama button
+    checkOllamaBtn.addEventListener('click', function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        console.log('Connect button clicked');
+
+        // Update UI to show connecting state
+        checkOllamaBtn.disabled = true;
+        checkOllamaBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Connecting...';
+        ollamaStatus.className = 'badge bg-info me-2';
+        ollamaStatus.textContent = 'Connecting...';
+
+        // Create a new iframe for the request
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+
+        // Make the request using the iframe
+        iframe.onload = function() {
+            // Remove the iframe after it's loaded
+            setTimeout(function() {
+                document.body.removeChild(iframe);
+            }, 100);
+
+            // Make a separate request to get the models
+            const request = new XMLHttpRequest();
+            request.open('GET', '/api/ollama/models/', true);
+            request.onload = function() {
+                if (request.status >= 200 && request.status < 400) {
+                    try {
+                        const data = JSON.parse(request.responseText);
+                        console.log('Models data:', data);
+
+                        if (data.success) {
+                            // Update UI to show connected state
+                            ollamaStatus.className = 'badge bg-success me-2';
+                            ollamaStatus.textContent = 'Connected';
+                            checkOllamaBtn.innerHTML = '<i class="fas fa-check me-2"></i>Connected';
+
+                            // Enable buttons
+                            analyzeSecurityBtn.disabled = false;
+                            suggestFixesBtn.disabled = false;
+                            optimizeCostBtn.disabled = false;
+
+                            // Use the default model from the server
+                            if (data.models && data.models.length > 0) {
+                                currentModel = data.models[0];
+                                console.log('Using model:', currentModel);
+
+                                // Set the model on the server
+                                const setModelRequest = new XMLHttpRequest();
+                                setModelRequest.open('POST', '/api/ollama/set-model/', true);
+                                setModelRequest.setRequestHeader('Content-Type', 'application/json');
+                                setModelRequest.setRequestHeader('X-CSRFToken', csrfToken);
+                                setModelRequest.send(JSON.stringify({ model: currentModel }));
+                            }
+                        } else {
+                            connectionFailed(data.error || 'Failed to connect to Ollama');
+                        }
+                    } catch (error) {
+                        console.error('Error parsing response:', error);
+                        connectionFailed('Error parsing server response');
+                    }
+                } else {
+                    connectionFailed('Server returned error: ' + request.status);
+                }
+            };
+
+            request.onerror = function() {
+                connectionFailed('Network error occurred');
+            };
+
+            request.send();
+        };
+
+        // Set the iframe source to trigger the request
+        iframe.src = '/api/ollama/models/';
+    });
+
+    function connectionFailed(errorMessage) {
+        console.error('Connection failed:', errorMessage);
+        ollamaStatus.className = 'badge bg-danger me-2';
+        ollamaStatus.textContent = 'Connection Failed';
+        checkOllamaBtn.innerHTML = '<i class="fas fa-plug me-2"></i>Retry Connection';
+        checkOllamaBtn.disabled = false;
+        showResult('Connection Error', errorMessage || 'Failed to connect to Ollama. Make sure it\'s running on this device.');
+    }
+
+    // Security analysis button
+    analyzeSecurityBtn.addEventListener('click', function() {
+        const securityIssues = {{ security_issues|safe }};
+        if (!securityIssues.high || securityIssues.high.length === 0) {
+            showResult('No High Severity Issues', 'No high severity security issues were found in this template.');
+            return;
+        }
+
+        showLoadingResult('Analyzing Security Issue...');
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/ollama/security/', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-CSRFToken', csrfToken);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        if (data.success) {
+                            showResult('Security Analysis', data.response);
+                        } else {
+                            showResult('Analysis Error', data.error || 'Failed to analyze security issue.');
+                        }
+                    } catch (error) {
+                        showResult('Analysis Error', 'Failed to parse response.');
+                    }
+                } else {
+                    showResult('Analysis Error', 'Failed to analyze security issue.');
+                }
+            }
+        };
+        xhr.send(JSON.stringify({
+            analysis_id: analysisId,
+            issue_index: 0
+        }));
+    });
+
+    // Suggest fixes button
+    suggestFixesBtn.addEventListener('click', function() {
+        const validationErrors = {{ validation_errors|safe }};
+        if (!validationErrors || validationErrors.length === 0) {
+            showResult('No Validation Errors', 'No validation errors were found in this template.');
+            return;
+        }
+
+        showLoadingResult('Generating Fix Suggestions...');
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/ollama/fixes/', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-CSRFToken', csrfToken);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        if (data.success) {
+                            showResult('Suggested Fixes', data.response);
+                        } else {
+                            showResult('Analysis Error', data.error || 'Failed to generate fix suggestions.');
+                        }
+                    } catch (error) {
+                        showResult('Analysis Error', 'Failed to parse response.');
+                    }
+                } else {
+                    showResult('Analysis Error', 'Failed to generate fix suggestions.');
+                }
+            }
+        };
+        xhr.send(JSON.stringify({ analysis_id: analysisId }));
+    });
+
+    // Cost optimization button
+    optimizeCostBtn.addEventListener('click', function() {
+        showLoadingResult('Analyzing Cost Optimization...');
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/ollama/cost/', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-CSRFToken', csrfToken);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        if (data.success) {
+                            showResult('Cost Optimization', data.response);
+                        } else {
+                            showResult('Analysis Error', data.error || 'Failed to generate cost optimization suggestions.');
+                        }
+                    } catch (error) {
+                        showResult('Analysis Error', 'Failed to parse response.');
+                    }
+                } else {
+                    showResult('Analysis Error', 'Failed to generate cost optimization suggestions.');
+                }
+            }
+        };
+        xhr.send(JSON.stringify({ analysis_id: analysisId }));
+    });
+
+    // Close result button
+    ollamaResultClose.addEventListener('click', function() {
+        ollamaResult.style.display = 'none';
+    });
+
+    function showLoadingResult(title) {
+        ollamaResultTitle.textContent = title;
+        ollamaResultContent.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="mt-2">Processing with ' + currentModel + '...</p></div>';
+        ollamaResult.style.display = 'block';
+    }
+
+    function showResult(title, content) {
+        ollamaResultTitle.textContent = title;
+        ollamaResultContent.innerHTML = `<div>${content.replace(/\n/g, '<br>')}</div>`;
+        ollamaResult.style.display = 'block';
+    }
+});
+</script>
+{% endblock %}

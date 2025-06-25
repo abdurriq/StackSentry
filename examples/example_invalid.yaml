@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Example template with intentional issues'
+
+Resources:
+  MyBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      # Missing PublicAccessBlockConfiguration - will trigger security warning
+      BucketName: my-public-bucket
+
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      # Missing required properties like ImageId
+      InstanceType: t2.micro
+      # Unencrypted volume - will trigger security warning
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 100
+            Encrypted: false
+
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow all inbound traffic
+      # Wide open security group - will trigger security warning
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+
+  # Invalid resource type - will trigger validation error
+  MyCustomResource:
+    Type: AWS::NonExistent::Resource
+    Properties:
+      SomeProperty: value
+
+  # Malformed resource - missing required Type
+  MalformedResource:
+    Properties:
+      Something: value
+
+  MyDatabase:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      # Missing required properties
+      DBInstanceClass: db.t3.micro
+      # Invalid property name - will trigger validation error
+      NonExistentProperty: value
