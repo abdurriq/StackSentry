@@ -121,7 +121,7 @@ class OllamaHelper:
         Services:
         {json.dumps(cost_estimate['current']['by_service'], indent=2)}
 
-        Suggest specific changes to optimize costs while maintaining functionality.
+        Suggest specific changes to optimise costs while maintaining functionality.
         """
 
         system = "You are a cloud cost optimization expert. Provide practical advice to reduce AWS costs."

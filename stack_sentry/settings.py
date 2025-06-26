@@ -29,8 +29,9 @@ DEBUG = os.environ.get("DEBUG", '').lower() == 'true'
 ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://13.40.29.155',
-    'https://www.qa-sedo-stacksentry.com',
+    'https://35.179.197.131',
+    'https://qa-sedo-stacksentry.space',
+    'https://www.qa-sedo-stacksentry.space',
 ]
 
 # Application definition

@@ -178,9 +178,10 @@ class AnalysisDetailView(mixins.LoginRequiredMixin, DetailView):
         add_line_context(context['validation_errors'])
         add_line_context(context['validation_warnings'])
 
-        # Convert cost projection data to JSON for the chart
+        # Convert cost projection data to JSON for the chart if it exists
         import json
-        context['cost_estimate']['projection'] = json.dumps(context['cost_estimate']['projection'])
+        if 'projection' in context['cost_estimate']:
+            context['cost_estimate']['projection'] = json.dumps(context['cost_estimate']['projection'])
 
         return context
 
@@ -274,7 +275,19 @@ def export_analysis(request: WSGIRequest, pk: int):
     matplotlib.use('Agg')
 
     # Get projection data
-    projection_data = context['cost_estimate']['projection']
+    if 'projection' in context['cost_estimate']:
+        projection_data = context['cost_estimate']['projection']
+    else:
+        # Create default projection data if not available
+        monthly_total = context['cost_estimate'].get('monthly_total', 0)
+        projection_data = [
+            {
+                'month': i,
+                'total': monthly_total,
+                'by_service': {'Total': monthly_total}
+            }
+            for i in range(1, 13)
+        ]
 
     # Create figure and axis
     plt.figure(figsize=(10, 6))
@@ -316,9 +329,10 @@ def export_analysis(request: WSGIRequest, pk: int):
     # Add the chart image to the context
     context['chart_image'] = chart_image
 
-    # Convert cost projection data to JSON for the template
+    # Convert cost projection data to JSON for the template if it exists
     import json
-    context['cost_estimate']['projection'] = json.dumps(context['cost_estimate']['projection'])
+    if 'projection' in context['cost_estimate']:
+        context['cost_estimate']['projection'] = json.dumps(context['cost_estimate']['projection'])
 
     # Render the analysis detail template to a string
     html_string = loader.render_to_string('analysis_export.html', context)
