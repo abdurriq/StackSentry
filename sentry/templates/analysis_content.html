@@ -839,12 +839,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Suggest fixes button
     suggestFixesBtn.addEventListener('click', function() {
-        const validationErrors = {{ validation_errors|safe }};
-        if (!validationErrors || validationErrors.length === 0) {
-            showResult('No Validation Errors', 'No validation errors were found in this template.');
-            return;
-        }
-
         showLoadingResult('Generating Fix Suggestions...');
 
         const xhr = new XMLHttpRequest();
